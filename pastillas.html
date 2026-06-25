@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#e8efe6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>🌿 mis pastillas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #7a9e7e;
+    --sage-light: #a8c5a0;
+    --sage-pale: #d4e8d0;
+    --sage-bg: #edf4eb;
+    --cream: #faf6f0;
+    --cream-dark: #f0e8dc;
+    --lilac: #c4b0d8;
+    --lilac-light: #e8dff4;
+    --lilac-pale: #f4f0fa;
+    --text-dark: #3a4a3c;
+    --text-mid: #6b7f6c;
+    --text-light: #9aaa9b;
+    --white: #ffffff;
+    --radius-sm: 12px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --shadow-soft: 0 2px 16px rgba(100,130,100,0.10);
+    --shadow-card: 0 4px 24px rgba(100,130,100,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--sage-bg);
+    color: var(--text-dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---- HEADER ---- */
+  .header {
+    background: linear-gradient(160deg, #c8dfc4 0%, #dde8d8 60%, #e8dff4 100%);
+    padding: 48px 24px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(196,176,216,0.35) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: 20px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(168,197,160,0.4) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    position: relative; z-index: 1;
+  }
+  .greeting {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--text-dark);
+    line-height: 1.2;
+  }
+  .greeting em { font-style: italic; color: var(--sage); }
+  .date-badge {
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(8px);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--text-mid);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .today-summary {
+    position: relative; z-index: 1;
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+  }
+  .summary-chip {
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .summary-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-green { background: var(--sage); }
+  .dot-lilac { background: var(--lilac); }
+
+  /* ---- NAV ---- */
+  .nav {
+    display: flex;
+    gap: 8px;
+    padding: 16px 24px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    background: var(--white);
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-mid);
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .nav-btn.active {
+    background: var(--sage);
+    color: var(--white);
+    box-shadow: 0 4px 16px rgba(122,158,126,0.35);
+  }
+
+  /* ---- MAIN CONTENT ---- */
+  .main { padding: 20px 20px 100px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ---- CARDS ---- */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-card);
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-light);
+    margin-bottom: 14px;
+  }
+
+  /* ---- TODAY'S PILLS ---- */
+  .pill-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--sage-bg);
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .pill-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .pill-row:first-child { padding-top: 0; }
+
+  .pill-icon {
+    width: 48px; height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .pill-icon.green { background: var(--sage-pale); }
+  .pill-icon.lilac { background: var(--lilac-pale); }
+  .pill-icon.cream { background: var(--cream-dark); }
+
+  .pill-info { flex: 1; min-width: 0; }
+  .pill-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 2px;
+  }
+  .pill-detail {
+    font-size: 12px;
+    color: var(--text-light);
+  }
+  .pill-check {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 2px solid var(--sage-pale);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    flex-shrink: 0;
+  }
+  .pill-check.checked {
+    background: var(--sage);
+    border-color: var(--sage);
+    color: white;
+    transform: scale(1.1);
+  }
+  .pill-check.skipped {
+    background: var(--lilac);
+    border-color: var(--lilac);
+    color: white;
+  }
+
+  .pill-actions {
+    display: none;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--sage-bg);
+  }
+  .pill-actions.open { display: flex; }
+  .action-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .action-btn.take { background: var(--sage-pale); color: var(--sage); }
+  .action-btn.take:hover { background: var(--sage); color: white; }
+  .action-btn.skip { background: var(--lilac-pale); color: var(--lilac); }
+  .action-btn.skip:hover { background: var(--lilac); color: white; }
+
+  /* ---- MINI CALENDAR ---- */
+  .mini-cal {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .cal-header-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .cal-day-label {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .cal-day.today {
+    background: var(--sage);
+    color: white;
+    font-weight: 600;
+  }
+  .cal-day.taken { background: var(--sage-pale); color: var(--sage); }
+  .cal-day.missed { background: #fce8e8; color: #c97070; }
+  .cal-day.partial { background: var(--cream-dark); color: var(--text-mid); }
+  .cal-day.future { color: var(--text-light); }
+  .cal-day.empty { visibility: hidden; }
+  .cal-month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .cal-month-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--text-dark);
+  }
+  .cal-nav-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--sage-bg);
+    color: var(--sage);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .cal-nav-btn:hover { background: var(--sage-pale); }
+
+  /* ---- CALCULATOR ---- */
+  .calc-form { display: flex; flex-direction: column; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .form-input {
+    background: var(--sage-bg);
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text-dark);
+    transition: border-color 0.2s;
+    width: 100%;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .form-input:focus { border-color: var(--sage-light); }
+  .form-select {
+    background: var(--sage-bg);
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text-dark);
+    transition: border-color 0.2s;
+    width: 100%;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aaa9b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    cursor: pointer;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .calc-btn {
+    background: var(--sage);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(122,158,126,0.35);
+  }
+  .calc-btn:hover { background: var(--sage-light); transform: translateY(-1px); }
+
+  .calc-result {
+    display: none;
+    margin-top: 16px;
+  }
+  .calc-result.show { display: block; }
+  .result-card {
+    background: linear-gradient(135deg, var(--sage-pale) 0%, var(--lilac-pale) 100%);
+    border-radius: var(--radius-md);
+    padding: 20px;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.6);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-label { font-size: 13px; color: var(--text-mid); }
+  .result-value { font-size: 15px; font-weight: 600; color: var(--text-dark); }
+  .result-alert {
+    background: var(--lilac-pale);
+    border-left: 3px solid var(--lilac);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 14px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-mid);
+  }
+
+  /* ---- MIS PASTILLAS (list) ---- */
+  .pill-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .pill-card-icon {
+    width: 52px; height: 52px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .pill-card-info { flex: 1; }
+  .pill-card-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 3px;
+  }
+  .pill-card-sub {
+    font-size: 12px;
+    color: var(--text-light);
+    line-height: 1.5;
+  }
+  .pill-tag {
+    display: inline-block;
+    background: var(--sage-pale);
+    color: var(--sage);
+    border-radius: 10px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .pill-tag.lilac { background: var(--lilac-pale); color: var(--lilac); }
+
+  .add-pill-btn {
+    width: 100%;
+    background: var(--white);
+    border: 2px dashed var(--sage-light);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--sage);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .add-pill-btn:hover { background: var(--sage-pale); border-style: solid; }
+
+  /* ---- MODAL ---- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(50,70,50,0.35);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: flex-end;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: 28px 24px 40px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: var(--sage-pale);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+  }
+  .modal-title em { font-style: italic; color: var(--sage); }
+  .modal-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--sage-bg);
+    color: var(--text-mid);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal { position: relative; }
+
+  .emoji-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .emoji-opt {
+    width: 42px; height: 42px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--sage-bg);
+    background: var(--sage-bg);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .emoji-opt.selected { border-color: var(--sage); background: var(--sage-pale); }
+
+  .color-picker {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .color-opt {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .color-opt.selected { border-color: var(--text-dark); transform: scale(1.1); }
+
+  .save-pill-btn {
+    background: var(--sage);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(122,158,126,0.35);
+  }
+
+  /* ---- BOTTOM NAV ---- */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--sage-pale);
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 8px 20px;
+    z-index: 50;
+  }
+  .bnav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    color: var(--text-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .bnav-btn .icon { font-size: 22px; transition: transform 0.2s; }
+  .bnav-btn.active { color: var(--sage); }
+  .bnav-btn.active .icon { transform: scale(1.15); }
+
+  /* ---- TOAST ---- */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text-dark);
+    color: white;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 200;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ---- SCHEDULE section ---- */
+  .schedule-pill-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .sched-chip {
+    background: var(--sage-bg);
+    border: 2px solid transparent;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sched-chip.active { background: var(--sage-pale); border-color: var(--sage); color: var(--sage); }
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .timeline-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .timeline-line {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .timeline-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--sage);
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .timeline-dot.lilac { background: var(--lilac); }
+  .tl-connector { width: 2px; flex: 1; min-height: 20px; background: var(--sage-pale); }
+  .timeline-content {
+    flex: 1;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-soft);
+  }
+  .tl-time { font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; }
+  .tl-name { font-size: 14px; font-weight: 600; color: var(--text-dark); }
+  .tl-detail { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+
+  /* ramp section */
+  .ramp-week {
+    background: var(--sage-bg);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .ramp-week-title { font-size: 12px; font-weight: 600; color: var(--sage); margin-bottom: 6px; }
+  .ramp-dose { font-size: 22px; font-weight: 600; color: var(--text-dark); }
+  .ramp-dose span { font-size: 13px; font-weight: 400; color: var(--text-light); }
+
+  .section-subtitle {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-dark);
+    margin-bottom: 14px;
+  }
+  .section-subtitle em { font-style: italic; color: var(--sage); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="greeting">hola,<br><em>mis pastillas</em> 🌿</div>
+    </div>
+    <div class="date-badge" id="dateBadge"></div>
+  </div>
+  <div class="today-summary">
+    <div class="summary-chip">
+      <div class="dot dot-green"></div>
+      <span id="takenCount">0 tomadas</span>
+    </div>
+    <div class="summary-chip">
+      <div class="dot dot-lilac"></div>
+      <span id="pendingCount">4 pendientes</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('hoy')">hoy</button>
+  <button class="nav-btn" onclick="showSection('calendario')">calendario</button>
+  <button class="nav-btn" onclick="showSection('mispastillas')">mis pastillas</button>
+  <button class="nav-btn" onclick="showSection('calcular')">calcular</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HOY -->
+  <div id="sec-hoy" class="section active">
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">de hoy</div>
+      <div id="pillList"></div>
+    </div>
+  </div>
+
+  <!-- CALENDARIO -->
+  <div id="sec-calendario" class="section">
+    <div class="card" style="margin-top:16px;">
+      <div class="cal-month-nav">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+        <div class="cal-month-title" id="calTitle"></div>
+        <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-header-days">
+        <div class="cal-day-label">dom</div>
+        <div class="cal-day-label">lun</div>
+        <div class="cal-day-label">mar</div>
+        <div class="cal-day-label">mié</div>
+        <div class="cal-day-label">jue</div>
+        <div class="cal-day-label">vie</div>
+        <div class="cal-day-label">sáb</div>
+      </div>
+      <div class="mini-cal" id="calGrid"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">leyenda</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-mid)">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--sage);"></div> todas tomadas
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-mid)">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--cream-dark);"></div> parcial
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-mid)">
+          <div style="width:28px;height:28px;border-radius:50%;background:#fce8e8;"></div> ninguna tomada
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIS PASTILLAS -->
+  <div id="sec-mispastillas" class="section">
+    <div style="margin-top:16px;" id="pillCardList"></div>
+    <button class="add-pill-btn" onclick="openAddModal()">
+      <span style="font-size:20px;">＋</span> agregar pastilla
+    </button>
+    <!-- RAMP SECTION -->
+    <div class="card" style="margin-top:20px;">
+      <div class="card-title">ajuste gradual de dosis</div>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:14px;">Para pastillas que van subiendo o bajando dosis con el tiempo.</p>
+      <div class="ramp-week">
+        <div class="ramp-week-title">Semana 1</div>
+        <div class="ramp-dose">0.5 <span>comprimido · 1×/día</span></div>
+      </div>
+      <div class="ramp-week">
+        <div class="ramp-week-title">Semana 2</div>
+        <div class="ramp-dose">1 <span>comprimido · 1×/día</span></div>
+      </div>
+      <div class="ramp-week">
+        <div class="ramp-week-title">Semana 3+</div>
+        <div class="ramp-dose">1.5 <span>comprimidos · 1×/día</span></div>
+      </div>
+      <p style="font-size:12px;color:var(--text-light);margin-top:10px;">✦ La edición de esquemas graduales se habilitará en la próxima versión.</p>
+    </div>
+  </div>
+
+  <!-- CALCULAR -->
+  <div id="sec-calcular" class="section">
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">¿cuántas pastillas necesito?</div>
+      <div class="calc-form">
+        <div class="form-group">
+          <label class="form-label">pastilla</label>
+          <select class="form-select" id="calcPill">
+            <option value="Koala">🐨 Koala</option>
+            <option value="Nutria">🦦 Nutria</option>
+            <option value="Hámster">🐹 Hámster</option>
+            <option value="Erizo">🦔 Erizo</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">dosis por toma</label>
+            <input class="form-input" type="number" id="calcDose" value="1" min="0.25" step="0.25">
+          </div>
+          <div class="form-group">
+            <label class="form-label">veces al día</label>
+            <input class="form-input" type="number" id="calcFreq" value="1" min="1" max="6">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">duración</label>
+            <input class="form-input" type="number" id="calcDuration" value="7" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">unidad</label>
+            <select class="form-select" id="calcUnit">
+              <option value="días">días</option>
+              <option value="semanas">semanas</option>
+              <option value="meses">meses</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">fecha de inicio</label>
+          <input class="form-input" type="date" id="calcStart">
+        </div>
+        <div class="form-group">
+          <label class="form-label">pastillas disponibles ahora</label>
+          <input class="form-input" type="number" id="calcStock" value="0" min="0">
+        </div>
+        <button class="calc-btn" onclick="calculate()">calcular 🌿</button>
+      </div>
+      <div class="calc-result" id="calcResult">
+        <div class="result-card">
+          <div class="result-row">
+            <span class="result-label">total necesario</span>
+            <span class="result-value" id="rTotal">—</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">tienes</span>
+            <span class="result-value" id="rStock">—</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">te faltan</span>
+            <span class="result-value" id="rMissing">—</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">terminas el</span>
+            <span class="result-value" id="rEnd">—</span>
+          </div>
+        </div>
+        <div class="result-alert" id="rAlert"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bnav-btn active" id="bnav-hoy" onclick="showSection('hoy')">
+    <span class="icon">💊</span>hoy
+  </button>
+  <button class="bnav-btn" id="bnav-calendario" onclick="showSection('calendario')">
+    <span class="icon">📅</span>calendario
+  </button>
+  <button class="bnav-btn" id="bnav-mispastillas" onclick="showSection('mispastillas')">
+    <span class="icon">🐾</span>pastillas
+  </button>
+  <button class="bnav-btn" id="bnav-calcular" onclick="showSection('calcular')">
+    <span class="icon">🧮</span>calcular
+  </button>
+</div>
+
+<!-- ADD PILL MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeAddModal()">×</button>
+    <div class="modal-title">nueva <em>pastilla</em></div>
+    <div class="calc-form">
+      <div class="form-group">
+        <label class="form-label">nombre</label>
+        <input class="form-input" type="text" id="newName" placeholder="ej. Koala">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ícono</label>
+        <div class="emoji-picker" id="emojiPicker">
+          🐨 🦦 🐹 🦔 🐰 🐻 🦊 🐼 🦁 🐮 🐷 🐸 🐙 🦋 🌸
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">color</label>
+        <div class="color-picker" id="colorPicker">
+          <div class="color-opt selected" data-color="green" style="background:var(--sage-pale);border-color:var(--sage-pale);" onclick="selectColor(this)"></div>
+          <div class="color-opt" data-color="lilac" style="background:var(--lilac-pale);border-color:var(--lilac-pale);" onclick="selectColor(this)"></div>
+          <div class="color-opt" data-color="cream" style="background:var(--cream-dark);border-color:var(--cream-dark);" onclick="selectColor(this)"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">tipo</label>
+          <select class="form-select" id="newType">
+            <option>comprimido</option>
+            <option>cápsula</option>
+            <option>jarabe</option>
+            <option>gotas</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">dosis</label>
+          <input class="form-input" type="text" id="newDose" placeholder="ej. 1, 0.5, 5ml">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">veces al día</label>
+          <input class="form-input" type="number" id="newFreq" value="1" min="1" max="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label">hora</label>
+          <input class="form-input" type="time" id="newTime" value="10:00">
+        </div>
+      </div>
+      <button class="save-pill-btn" onclick="savePill()">guardar pastilla 🌿</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- DATA ----
+const STORAGE_KEY = 'pastillas_app_v1';
+
+const defaultPills = [
+  { id: 1, name: 'Koala', emoji: '🐨', color: 'green', type: 'cápsula', dose: '3', freq: 1, time: '10:00' },
+  { id: 2, name: 'Nutria', emoji: '🦦', color: 'lilac', type: 'comprimido', dose: '0.5', freq: 1, time: '10:00' },
+  { id: 3, name: 'Hámster', emoji: '🐹', color: 'green', type: 'comprimido', dose: '1', freq: 1, time: '10:00' },
+  { id: 4, name: 'Erizo', emoji: '🦔', color: 'cream', type: 'cápsula', dose: '1', freq: 1, time: '10:00' },
+];
+
+let appData = loadData();
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { pills: defaultPills, log: {}, nextId: 5 };
+}
+
+function saveData() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); } catch(e) {}
+}
+
+// ---- DATE ----
+const today = new Date();
+const todayKey = dateKey(today);
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const days = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+document.getElementById('dateBadge').textContent =
+  `${days[today.getDay()]}, ${today.getDate()} de ${months[today.getMonth()]}`;
+
+// ---- NAV ----
+let currentSection = 'hoy';
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+
+  document.getElementById('sec-'+name).classList.add('active');
+  document.getElementById('bnav-'+name).classList.add('active');
+
+  // match top nav
+  const navBtns = document.querySelectorAll('.nav-btn');
+  const map = { hoy:0, calendario:1, mispastillas:2, calcular:3 };
+  if (map[name] !== undefined) navBtns[map[name]].classList.add('active');
+
+  currentSection = name;
+  if (name === 'calendario') renderCalendar();
+  if (name === 'mispastillas') renderPillCards();
+}
+
+// ---- TODAY PILLS ----
+function renderTodayPills() {
+  const list = document.getElementById('pillList');
+  const log = appData.log[todayKey] || {};
+  let taken = 0;
+
+  list.innerHTML = appData.pills.map(p => {
+    const status = log[p.id] || 'pending';
+    if (status === 'taken') taken++;
+    const checkedClass = status === 'taken' ? 'checked' : status === 'skipped' ? 'skipped' : '';
+    const checkIcon = status === 'taken' ? '✓' : status === 'skipped' ? '–' : '';
+    return `
+    <div class="pill-row" id="prow-${p.id}">
+      <div class="pill-icon ${p.color}">
+        <span>${p.emoji}</span>
+      </div>
+      <div class="pill-info">
+        <div class="pill-name">${p.name}</div>
+        <div class="pill-detail">${p.dose} ${p.type} · ${p.freq}×/día · ${p.time}</div>
+        <div class="pill-actions" id="pact-${p.id}">
+          <button class="action-btn take" onclick="markPill(${p.id},'taken')">✓ tomé</button>
+          <button class="action-btn skip" onclick="markPill(${p.id},'skipped')">– salté</button>
+        </div>
+      </div>
+      <button class="pill-check ${checkedClass}" id="pcheck-${p.id}" onclick="toggleActions(${p.id})">${checkIcon}</button>
+    </div>`;
+  }).join('');
+
+  const pending = appData.pills.length - taken;
+  document.getElementById('takenCount').textContent = `${taken} tomada${taken!==1?'s':''}`;
+  document.getElementById('pendingCount').textContent = `${pending} pendiente${pending!==1?'s':''}`;
+}
+
+function toggleActions(id) {
+  const act = document.getElementById('pact-'+id);
+  act.classList.toggle('open');
+}
+
+function markPill(id, status) {
+  if (!appData.log[todayKey]) appData.log[todayKey] = {};
+  appData.log[todayKey][id] = status;
+  saveData();
+  renderTodayPills();
+  const pill = appData.pills.find(p=>p.id===id);
+  showToast(status === 'taken' ? `✓ ${pill.emoji} tomada` : `– ${pill.emoji} saltada`);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ---- CALENDAR ----
+let calYear = today.getFullYear();
+let calMonth = today.getMonth();
+
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  document.getElementById('calTitle').textContent = `${months[calMonth]} ${calYear}`;
+  const grid = document.getElementById('calGrid');
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+
+  let html = '';
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = key === todayKey;
+    const isFuture = new Date(calYear, calMonth, d) > today;
+    const log = appData.log[key] || {};
+    const total = appData.pills.length;
+    const taken = Object.values(log).filter(v=>v==='taken').length;
+
+    let cls = 'cal-day';
+    if (isToday) cls += ' today';
+    else if (isFuture) cls += ' future';
+    else if (taken === 0 && total > 0 && Object.keys(log).length > 0) cls += ' missed';
+    else if (taken === total && total > 0) cls += ' taken';
+    else if (taken > 0) cls += ' partial';
+
+    html += `<div class="${cls}">${d}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// ---- PILL CARDS ----
+function renderPillCards() {
+  const container = document.getElementById('pillCardList');
+  container.innerHTML = appData.pills.map(p => `
+    <div class="pill-card">
+      <div class="pill-card-icon ${p.color}">${p.emoji}</div>
+      <div class="pill-card-info">
+        <div class="pill-card-name">${p.name}</div>
+        <div class="pill-card-sub">${p.dose} ${p.type} · ${p.freq} vez/día · ${p.time}</div>
+        <span class="pill-tag ${p.color === 'lilac' ? 'lilac' : ''}">${p.type}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ---- ADD PILL MODAL ----
+let selectedEmoji = '🐨';
+let selectedColor = 'green';
+
+function openAddModal() {
+  // build emoji picker
+  const emojis = ['🐨','🦦','🐹','🦔','🐰','🐻','🦊','🐼','🦁','🐮','🐷','🐸','🐙','🦋','🌸'];
+  const picker = document.getElementById('emojiPicker');
+  picker.innerHTML = emojis.map(e =>
+    `<div class="emoji-opt${e===selectedEmoji?' selected':''}" onclick="selectEmoji(this,'${e}')">${e}</div>`
+  ).join('');
+  document.getElementById('addModal').classList.add('open');
+}
+
+function closeAddModal() {
+  document.getElementById('addModal').classList.remove('open');
+}
+
+function selectEmoji(el, emoji) {
+  document.querySelectorAll('.emoji-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedEmoji = emoji;
+}
+
+function selectColor(el) {
+  document.querySelectorAll('.color-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedColor = el.dataset.color;
+}
+
+function savePill() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { showToast('ponle un nombre 🌿'); return; }
+  const pill = {
+    id: appData.nextId++,
+    name,
+    emoji: selectedEmoji,
+    color: selectedColor,
+    type: document.getElementById('newType').value,
+    dose: document.getElementById('newDose').value || '1',
+    freq: parseInt(document.getElementById('newFreq').value) || 1,
+    time: document.getElementById('newTime').value || '10:00',
+  };
+  appData.pills.push(pill);
+  saveData();
+  closeAddModal();
+  renderTodayPills();
+  renderPillCards();
+  showToast(`${pill.emoji} ${pill.name} agregada`);
+}
+
+// ---- CALCULATOR ----
+document.getElementById('calcStart').value = todayKey;
+
+function calculate() {
+  const dose = parseFloat(document.getElementById('calcDose').value) || 1;
+  const freq = parseInt(document.getElementById('calcFreq').value) || 1;
+  const dur = parseInt(document.getElementById('calcDuration').value) || 7;
+  const unit = document.getElementById('calcUnit').value;
+  const stockEl = document.getElementById('calcStock').value;
+  const stock = parseInt(stockEl) || 0;
+  const startVal = document.getElementById('calcStart').value;
+
+  let days = dur;
+  if (unit === 'semanas') days = dur * 7;
+  if (unit === 'meses') days = dur * 30;
+
+  const total = dose * freq * days;
+  const missing = Math.max(0, total - stock);
+
+  const start = new Date(startVal + 'T12:00:00');
+  const end = new Date(start);
+  end.setDate(end.getDate() + days - 1);
+  const buyBy = new Date(start);
+  buyBy.setDate(buyBy.getDate() + Math.floor(days * 0.75));
+
+  const fmt = d => `${d.getDate()} de ${months[d.getMonth()]}`;
+
+  document.getElementById('rTotal').textContent = `${total} unidades`;
+  document.getElementById('rStock').textContent = `${stock} unidades`;
+  document.getElementById('rMissing').textContent = missing > 0 ? `${missing} unidades` : 'tienes suficiente ✓';
+  document.getElementById('rEnd').textContent = fmt(end);
+  document.getElementById('rAlert').textContent =
+    missing > 0
+      ? `🛒 Compra antes del ${fmt(buyBy)} para no quedarte sin pastillas.`
+      : `🌿 Con tu stock actual llegas hasta el ${fmt(end)}.`;
+
+  document.getElementById('calcResult').classList.add('show');
+}
+
+// ---- INIT ----
+renderTodayPills();
+</script>
+</body>
+</html>
