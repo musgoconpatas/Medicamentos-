@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fondo redondeado sage -->
+  <rect width="512" height="512" rx="110" fill="#c8dfc4"/>
+  
+  <!-- Orejas (café oscuro con puntas naranjas) -->
+  <ellipse cx="155" cy="148" rx="62" ry="58" fill="#3d2010"/>
+  <ellipse cx="357" cy="148" rx="62" ry="58" fill="#3d2010"/>
+  <ellipse cx="155" cy="148" rx="38" ry="36" fill="#d45a1a"/>
+  <ellipse cx="357" cy="148" rx="38" ry="36" fill="#d45a1a"/>
+
+  <!-- Cuerpo principal (cara) -->
+  <ellipse cx="256" cy="300" rx="148" ry="138" fill="#d45a1a"/>
+  
+  <!-- Manchas blancas laterales cara -->
+  <ellipse cx="170" cy="290" rx="52" ry="62" fill="#f5ede0"/>
+  <ellipse cx="342" cy="290" rx="52" ry="62" fill="#f5ede0"/>
+
+  <!-- Cara centro -->
+  <ellipse cx="256" cy="278" rx="90" ry="100" fill="#c04010"/>
+
+  <!-- Hocico -->
+  <ellipse cx="256" cy="330" rx="58" ry="44" fill="#f5ede0"/>
+  
+  <!-- Nariz -->
+  <ellipse cx="256" cy="308" rx="18" ry="13" fill="#3d2010"/>
+  
+  <!-- Ojos -->
+  <!-- Ojo izquierdo -->
+  <ellipse cx="210" cy="262" rx="22" ry="24" fill="#1a1a1a"/>
+  <ellipse cx="216" cy="256" rx="7" ry="8" fill="white"/>
+  <!-- Ojo derecho -->
+  <ellipse cx="302" cy="262" rx="22" ry="24" fill="#1a1a1a"/>
+  <ellipse cx="308" cy="256" rx="7" ry="8" fill="white"/>
+
+  <!-- Sonrisa -->
+  <path d="M232 348 Q256 368 280 348" stroke="#3d2010" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Cachetes rosados -->
+  <ellipse cx="185" cy="318" rx="22" ry="16" fill="#f0a0a0" opacity="0.6"/>
+  <ellipse cx="327" cy="318" rx="22" ry="16" fill="#f0a0a0" opacity="0.6"/>
+
+  <!-- Pastillita en la boca - asomando -->
+  <!-- Cuerpo pastilla -->
+  <rect x="224" y="358" width="64" height="32" rx="16" fill="white" stroke="#d4b0e0" stroke-width="3"/>
+  <!-- Línea divisoria pastilla -->
+  <line x1="256" y1="360" x2="256" y2="388" stroke="#c4a0d0" stroke-width="3"/>
+  <!-- Mitad izquierda pastilla -->
+  <rect x="224" y="358" width="32" height="32" rx="16" fill="#e8d0f8"/>
+  <!-- Mitad derecha pastilla -->
+  <rect x="256" y="358" width="32" height="32" rx="16" fill="#a8c5a0"/>
+
+  <!-- Colita arriba (detalle tierno) -->
+  <path d="M380 200 Q430 160 410 220 Q450 190 420 250" stroke="#d45a1a" stroke-width="18" fill="none" stroke-linecap="round"/>
+  <path d="M380 200 Q430 160 410 220 Q450 190 420 250" stroke="#f5ede0" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="12,10"/>
+
+  <!-- Estrellitas decorativas -->
+  <text x="95" y="210" font-size="28" opacity="0.7">✦</text>
+  <text x="385" y="430" font-size="22" opacity="0.6">✦</text>
+  <text x="400" y="200" font-size="18" opacity="0.5">·</text>
+</svg>
