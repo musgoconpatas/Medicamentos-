@@ -820,12 +820,7 @@
       <div class="calc-form">
         <div class="form-group">
           <label class="form-label">pastilla</label>
-          <select class="form-select" id="calcPill">
-            <option value="Koala">🐨 Koala</option>
-            <option value="Nutria">🦦 Nutria</option>
-            <option value="Hámster">🐹 Hámster</option>
-            <option value="Erizo">🦔 Erizo</option>
-          </select>
+          <select class="form-select" id="calcPill"></select>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -1018,6 +1013,7 @@ function showSection(name) {
   currentSection = name;
   if (name === 'calendario') renderCalendar();
   if (name === 'mispastillas') renderPillCards();
+  if (name === 'calcular') populateCalcPills();
 }
 
 // ---- TODAY PILLS ----
@@ -1260,6 +1256,13 @@ function playChime() {
 }
 
 // ---- CALCULATOR ----
+function populateCalcPills() {
+  const sel = document.getElementById('calcPill');
+  sel.innerHTML = appData.pills.map(p =>
+    `<option value="${p.id}">${p.emoji} ${p.name}</option>`
+  ).join('');
+}
+
 document.getElementById('calcStart').value = todayKey;
 
 function calculate() {
@@ -1300,6 +1303,7 @@ function calculate() {
 
 // ---- INIT ----
 renderTodayPills();
+populateCalcPills();
 </script>
 </body>
 </html>
