@@ -1064,6 +1064,7 @@ function markPill(id, status) {
   saveData();
   renderTodayPills();
   const pill = appData.pills.find(p=>p.id===id);
+  if (status === 'taken') playChime();
   showToast(status === 'taken' ? `✓ ${pill.emoji} tomada` : `– ${pill.emoji} saltada`);
 }
 
@@ -1125,8 +1126,51 @@ function renderPillCards() {
         <div class="pill-card-sub">${p.dose} ${p.type} · ${p.freq} vez/día · ${p.time}</div>
         <span class="pill-tag ${p.color === 'lilac' ? 'lilac' : ''}">${p.type}</span>
       </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+        <button onclick="openEditModal(${p.id})" style="background:var(--sage-pale);border:none;border-radius:10px;padding:6px 10px;font-size:13px;color:var(--sage);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;">✏️ editar</button>
+        <button onclick="deletePill(${p.id})" style="background:#fce8e8;border:none;border-radius:10px;padding:6px 10px;font-size:13px;color:#c97070;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;">🗑️ borrar</button>
+      </div>
     </div>
   `).join('');
+}
+
+function deletePill(id) {
+  const pill = appData.pills.find(p=>p.id===id);
+  if (!confirm(`¿Borrar ${pill.emoji} ${pill.name}?`)) return;
+  appData.pills = appData.pills.filter(p=>p.id!==id);
+  saveData();
+  renderPillCards();
+  renderTodayPills();
+  showToast(`${pill.emoji} ${pill.name} borrada`);
+}
+
+let editingId = null;
+
+function openEditModal(id) {
+  const p = appData.pills.find(p=>p.id===id);
+  editingId = id;
+  selectedEmoji = p.emoji;
+  selectedColor = p.color;
+
+  const emojis = ['🐨','🦦','🐹','🦔','🐰','🐻','🦊','🐼','🦁','🐮','🐷','🐸','🐙','🦋','🌸'];
+  const picker = document.getElementById('emojiPicker');
+  picker.innerHTML = emojis.map(e =>
+    `<div class="emoji-opt${e===p.emoji?' selected':''}" onclick="selectEmoji(this,'${e}')">${e}</div>`
+  ).join('');
+
+  document.querySelectorAll('.color-opt').forEach(el => {
+    el.classList.toggle('selected', el.dataset.color === p.color);
+  });
+
+  document.getElementById('newName').value = p.name;
+  document.getElementById('newType').value = p.type;
+  document.getElementById('newDose').value = p.dose;
+  document.getElementById('newFreq').value = p.freq;
+  document.getElementById('newTime').value = p.time;
+
+  document.querySelector('.modal-title').innerHTML = `editar <em>${p.name}</em>`;
+  document.querySelector('.save-pill-btn').textContent = 'guardar cambios 🌿';
+  document.getElementById('addModal').classList.add('open');
 }
 
 // ---- ADD PILL MODAL ----
@@ -1144,6 +1188,9 @@ function openAddModal() {
 }
 
 function closeAddModal() {
+  editingId = null;
+  document.querySelector('.modal-title').innerHTML = `nueva <em>pastilla</em>`;
+  document.querySelector('.save-pill-btn').textContent = 'guardar pastilla 🌿';
   document.getElementById('addModal').classList.remove('open');
 }
 
@@ -1162,8 +1209,7 @@ function selectColor(el) {
 function savePill() {
   const name = document.getElementById('newName').value.trim();
   if (!name) { showToast('ponle un nombre 🌿'); return; }
-  const pill = {
-    id: appData.nextId++,
+  const data = {
     name,
     emoji: selectedEmoji,
     color: selectedColor,
@@ -1172,12 +1218,45 @@ function savePill() {
     freq: parseInt(document.getElementById('newFreq').value) || 1,
     time: document.getElementById('newTime').value || '10:00',
   };
-  appData.pills.push(pill);
-  saveData();
-  closeAddModal();
-  renderTodayPills();
-  renderPillCards();
-  showToast(`${pill.emoji} ${pill.name} agregada`);
+  if (editingId !== null) {
+    const idx = appData.pills.findIndex(p=>p.id===editingId);
+    appData.pills[idx] = { ...appData.pills[idx], ...data };
+    saveData();
+    closeAddModal();
+    renderTodayPills();
+    renderPillCards();
+    showToast(`${data.emoji} ${data.name} actualizada`);
+  } else {
+    const pill = { id: appData.nextId++, ...data };
+    appData.pills.push(pill);
+    saveData();
+    closeAddModal();
+    renderTodayPills();
+    renderPillCards();
+    showToast(`${pill.emoji} ${pill.name} agregada`);
+  }
+}
+
+// ---- SONIDO ----
+function playChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523.25, 659.25, 783.99]; // Do Mi Sol
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.18, t + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      osc.start(t);
+      osc.stop(t + 0.5);
+    });
+  } catch(e) {}
 }
 
 // ---- CALCULATOR ----
