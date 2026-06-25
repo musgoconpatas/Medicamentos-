@@ -797,19 +797,10 @@
     <div class="card" style="margin-top:20px;">
       <div class="card-title">ajuste gradual de dosis</div>
       <p style="font-size:13px;color:var(--text-light);margin-bottom:14px;">Para pastillas que van subiendo o bajando dosis con el tiempo.</p>
-      <div class="ramp-week">
-        <div class="ramp-week-title">Semana 1</div>
-        <div class="ramp-dose">0.5 <span>comprimido · 1×/día</span></div>
-      </div>
-      <div class="ramp-week">
-        <div class="ramp-week-title">Semana 2</div>
-        <div class="ramp-dose">1 <span>comprimido · 1×/día</span></div>
-      </div>
-      <div class="ramp-week">
-        <div class="ramp-week-title">Semana 3+</div>
-        <div class="ramp-dose">1.5 <span>comprimidos · 1×/día</span></div>
-      </div>
-      <p style="font-size:12px;color:var(--text-light);margin-top:10px;">✦ La edición de esquemas graduales se habilitará en la próxima versión.</p>
+      <div id="rampList"></div>
+      <button class="add-pill-btn" style="margin-top:10px;" onclick="openRampModal()">
+        <span style="font-size:20px;">📈</span> agregar esquema gradual
+      </button>
     </div>
   </div>
 
@@ -974,6 +965,30 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- RAMP MODAL -->
+<div class="modal-overlay" id="rampModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeRampModal()">×</button>
+    <div class="modal-title">esquema <em>gradual</em></div>
+    <div class="calc-form">
+      <div class="form-group">
+        <label class="form-label">medicamento</label>
+        <select class="form-select" id="rampPill"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">fecha de inicio</label>
+        <input class="form-input" type="date" id="rampStart">
+      </div>
+      <div class="form-label" style="margin-bottom:8px;">etapas</div>
+      <div id="rampStages"></div>
+      <button onclick="addRampStage()" style="background:var(--sage-pale);border:none;border-radius:var(--radius-sm);padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--sage);cursor:pointer;width:100%;margin-bottom:8px;">+ agregar etapa</button>
+      <p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">La última etapa es la dosis final permanente. Si es 0, la pastilla desaparece de "de hoy".</p>
+      <button class="save-pill-btn" onclick="saveRamp()">guardar esquema 🌿</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ---- DATA ----
 const STORAGE_KEY = 'pastillas_app_v1';
@@ -1030,7 +1045,7 @@ function showSection(name) {
 
   currentSection = name;
   if (name === 'calendario') renderCalendar();
-  if (name === 'mispastillas') renderPillCards();
+  if (name === 'mispastillas') { renderPillCards(); renderRampList(); }
   if (name === 'calcular') populateCalcPills();
 }
 
@@ -1039,8 +1054,12 @@ function renderTodayPills() {
   const list = document.getElementById('pillList');
   const log = appData.log[todayKey] || {};
   let taken = 0;
+  let visible = 0;
 
-  list.innerHTML = appData.pills.map(p => {
+  const rows = appData.pills.map(p => {
+    const { dose, active } = getRampDose(p, todayKey);
+    if (!active) return '';
+    visible++;
     const status = log[p.id] || 'pending';
     if (status === 'taken') taken++;
     const checkedClass = status === 'taken' ? 'checked' : status === 'skipped' ? 'skipped' : '';
@@ -1052,7 +1071,7 @@ function renderTodayPills() {
       </div>
       <div class="pill-info">
         <div class="pill-name">${p.name}</div>
-        <div class="pill-detail">${p.dose} ${p.type} · ${p.freq}×/día · ${p.time}</div>
+        <div class="pill-detail">${dose} ${p.type} · ${p.freq}×/día · ${p.time}</div>
         <div class="pill-actions" id="pact-${p.id}">
           <button class="action-btn take" onclick="markPill(${p.id},'taken')">✓ tomé</button>
           <button class="action-btn skip" onclick="markPill(${p.id},'skipped')">– salté</button>
@@ -1062,7 +1081,9 @@ function renderTodayPills() {
     </div>`;
   }).join('');
 
-  const pending = appData.pills.length - taken;
+  list.innerHTML = rows || '<p style="font-size:13px;color:var(--text-light);padding:8px 0;">No hay medicamentos para hoy 🌿</p>';
+
+  const pending = visible - taken;
   document.getElementById('takenCount').textContent = `${taken} tomada${taken!==1?'s':''}`;
   document.getElementById('pendingCount').textContent = `${pending} pendiente${pending!==1?'s':''}`;
 }
@@ -1273,7 +1294,173 @@ function playChime() {
   } catch(e) {}
 }
 
-// ---- CALCULATOR ----
+// ---- RAMP: get dose for a pill on a given dateKey ----
+function getRampDose(pill, dKey) {
+  const ramps = (appData.ramps || []).filter(r => r.pillId === pill.id);
+  if (ramps.length === 0) return { dose: pill.dose, active: true };
+
+  // find the most recently started ramp that has already begun
+  const started = ramps.filter(r => r.startDate <= dKey).sort((a,b) => b.startDate.localeCompare(a.startDate));
+  if (started.length === 0) return { dose: pill.dose, active: true };
+
+  const ramp = started[0];
+  let cursor = ramp.startDate;
+  let finalDose = ramp.stages[ramp.stages.length - 1].dose;
+
+  for (let i = 0; i < ramp.stages.length; i++) {
+    const stage = ramp.stages[i];
+    // calc end of this stage
+    let stageDays = stage.duration;
+    if (stage.unit === 'semanas') stageDays *= 7;
+    if (stage.unit === 'meses') stageDays *= 30;
+
+    const stageEnd = addDays(cursor, stageDays - 1);
+
+    if (dKey >= cursor && dKey <= stageEnd) {
+      const dose = parseFloat(stage.dose);
+      return { dose: dose === 0 ? '0' : String(dose), active: dose !== 0 };
+    }
+    cursor = addDays(stageEnd, 1);
+  }
+  // past all stages — use final dose
+  const fd = parseFloat(finalDose);
+  return { dose: fd === 0 ? '0' : String(fd), active: fd !== 0 };
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return dateKey(d);
+}
+
+// ---- RAMP MODAL ----
+let editingRampId = null;
+let rampStages = [];
+
+function openRampModal(rampId) {
+  const sel = document.getElementById('rampPill');
+  sel.innerHTML = appData.pills.map(p => `<option value="${p.id}">${p.emoji} ${p.name}</option>`).join('');
+  document.getElementById('rampStart').value = todayKey;
+
+  if (rampId !== undefined) {
+    editingRampId = rampId;
+    const ramp = appData.ramps.find(r => r.id === rampId);
+    sel.value = ramp.pillId;
+    document.getElementById('rampStart').value = ramp.startDate;
+    rampStages = ramp.stages.map(s => ({...s}));
+  } else {
+    editingRampId = null;
+    rampStages = [{ dose: '1', duration: 7, unit: 'días' }];
+  }
+  renderRampStages();
+  document.getElementById('rampModal').classList.add('open');
+}
+
+function closeRampModal() {
+  document.getElementById('rampModal').classList.remove('open');
+  renderRampList();
+}
+
+function renderRampStages() {
+  const container = document.getElementById('rampStages');
+  container.innerHTML = rampStages.map((s, i) => `
+    <div style="background:var(--sage-bg);border-radius:var(--radius-md);padding:12px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:600;color:var(--sage);">etapa ${i+1}</span>
+        ${rampStages.length > 1 ? `<button onclick="removeRampStage(${i})" style="background:none;border:none;color:var(--text-light);font-size:16px;cursor:pointer;">×</button>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div>
+          <div style="font-size:11px;color:var(--text-light);margin-bottom:4px;">dosis</div>
+          <input class="form-input" style="padding:8px;" type="number" min="0" step="0.25" value="${s.dose}" onchange="updateStage(${i},'dose',this.value)">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-light);margin-bottom:4px;">duración</div>
+          <input class="form-input" style="padding:8px;" type="number" min="1" value="${s.duration}" onchange="updateStage(${i},'duration',this.value)">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-light);margin-bottom:4px;">unidad</div>
+          <select class="form-select" style="padding:8px;" onchange="updateStage(${i},'unit',this.value)">
+            <option ${s.unit==='días'?'selected':''}>días</option>
+            <option ${s.unit==='semanas'?'selected':''}>semanas</option>
+            <option ${s.unit==='meses'?'selected':''}>meses</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateStage(i, field, val) {
+  rampStages[i][field] = field === 'duration' ? parseInt(val) : val;
+}
+
+function addRampStage() {
+  rampStages.push({ dose: '1', duration: 7, unit: 'días' });
+  renderRampStages();
+}
+
+function removeRampStage(i) {
+  rampStages.splice(i, 1);
+  renderRampStages();
+}
+
+function saveRamp() {
+  const pillId = parseInt(document.getElementById('rampPill').value);
+  const startDate = document.getElementById('rampStart').value;
+  if (!appData.ramps) appData.ramps = [];
+
+  if (editingRampId !== null) {
+    const idx = appData.ramps.findIndex(r => r.id === editingRampId);
+    appData.ramps[idx] = { id: editingRampId, pillId, startDate, stages: rampStages };
+  } else {
+    const newId = Date.now();
+    appData.ramps.push({ id: newId, pillId, startDate, stages: rampStages });
+  }
+  saveData();
+  closeRampModal();
+  renderTodayPills();
+  showToast('📈 esquema guardado');
+}
+
+function deleteRamp(rampId) {
+  if (!confirm('¿Borrar este esquema?')) return;
+  appData.ramps = appData.ramps.filter(r => r.id !== rampId);
+  saveData();
+  renderRampList();
+  renderTodayPills();
+  showToast('esquema borrado');
+}
+
+function renderRampList() {
+  const container = document.getElementById('rampList');
+  const ramps = appData.ramps || [];
+  if (ramps.length === 0) {
+    container.innerHTML = `<p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">No hay esquemas graduales todavía.</p>`;
+    return;
+  }
+  container.innerHTML = ramps.map(r => {
+    const pill = appData.pills.find(p => p.id === r.pillId);
+    if (!pill) return '';
+    const stagesSummary = r.stages.map((s,i) =>
+      `<span style="font-size:12px;color:var(--text-mid);">etapa ${i+1}: ${s.dose} · ${s.duration} ${s.unit}</span>`
+    ).join('<br>');
+    return `
+    <div style="background:var(--white);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow-soft);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text-dark);">${pill.emoji} ${pill.name}</div>
+          <div style="font-size:12px;color:var(--text-light);">desde ${r.startDate}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="openRampModal(${r.id})" style="background:var(--sage-pale);border:none;border-radius:10px;padding:5px 10px;font-size:12px;color:var(--sage);cursor:pointer;">✏️</button>
+          <button onclick="deleteRamp(${r.id})" style="background:#fce8e8;border:none;border-radius:10px;padding:5px 10px;font-size:12px;color:#c97070;cursor:pointer;">🗑️</button>
+        </div>
+      </div>
+      ${stagesSummary}
+    </div>`;
+  }).join('');
+}
 function populateCalcPills() {
   const sel = document.getElementById('calcPill');
   sel.innerHTML = appData.pills.map(p =>
@@ -1364,6 +1551,7 @@ function calculate() {
 renderTodayPills();
 populateCalcPills();
 updateDoseHint();
+renderRampList();
 </script>
 </body>
 </html>
