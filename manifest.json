@@ -1,0 +1,16 @@
+{
+  "name": "mis pastillas",
+  "short_name": "pastillas",
+  "start_url": "./pastillas.html",
+  "display": "standalone",
+  "background_color": "#edf4eb",
+  "theme_color": "#c8dfc4",
+  "icons": [
+    {
+      "src": "icono.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
