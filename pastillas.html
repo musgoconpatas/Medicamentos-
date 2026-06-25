@@ -832,6 +832,18 @@
             <input class="form-input" type="number" id="calcFreq" value="1" min="1" max="6">
           </div>
         </div>
+        <!-- Toggle tratamiento indefinido -->
+        <div style="background:var(--sage-bg);border-radius:var(--radius-md);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text-dark);">tratamiento indefinido</div>
+            <div style="font-size:12px;color:var(--text-light);margin-top:2px;">sin fecha de término definida</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
+            <input type="checkbox" id="calcIndefinido" onchange="toggleIndefinido()" style="opacity:0;width:0;height:0;">
+            <span id="toggleSlider" style="position:absolute;cursor:pointer;inset:0;background:var(--sage-pale);border-radius:24px;transition:0.3s;"></span>
+          </label>
+        </div>
+        <div id="duracionFields">
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">duración</label>
@@ -846,13 +858,14 @@
             </select>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">fecha de inicio</label>
-          <input class="form-input" type="date" id="calcStart">
         </div>
         <div class="form-group">
-          <label class="form-label">pastillas disponibles ahora</label>
+          <label class="form-label">stock actual</label>
           <input class="form-input" type="number" id="calcStock" value="0" min="0">
+        </div>
+        <div class="form-group" id="diasParaField" style="display:none;">
+          <label class="form-label">quiero calcular para cuántos días</label>
+          <input class="form-input" type="number" id="calcDiasPara" value="30" min="1">
         </div>
         <button class="calc-btn" onclick="calculate()">calcular 🌿</button>
       </div>
@@ -926,16 +939,21 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">tipo</label>
-          <select class="form-select" id="newType">
-            <option>comprimido</option>
-            <option>cápsula</option>
-            <option>jarabe</option>
-            <option>gotas</option>
+          <select class="form-select" id="newType" onchange="updateDoseHint()">
+            <option value="comprimido">comprimido</option>
+            <option value="cápsula">cápsula</option>
+            <option value="jarabe">jarabe (ml)</option>
+            <option value="gotas">gotas</option>
+            <option value="puff">puff / inhalador</option>
+            <option value="parche">parche transdérmico</option>
+            <option value="inyección">inyección</option>
+            <option value="crema">crema / pomada</option>
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">dosis</label>
           <input class="form-input" type="text" id="newDose" placeholder="ej. 1, 0.5, 5ml">
+          <span id="doseHint" style="font-size:11px;color:var(--text-light);margin-top:3px;"></span>
         </div>
       </div>
       <div class="form-row">
@@ -1263,40 +1281,81 @@ function populateCalcPills() {
   ).join('');
 }
 
-document.getElementById('calcStart').value = todayKey;
+function toggleIndefinido() {
+  const on = document.getElementById('calcIndefinido').checked;
+  const slider = document.getElementById('toggleSlider');
+  slider.style.background = on ? 'var(--sage)' : 'var(--sage-pale)';
+  slider.style.transform = on ? 'none' : 'none';
+  document.getElementById('duracionFields').style.display = on ? 'none' : 'block';
+  document.getElementById('diasParaField').style.display = on ? 'block' : 'none';
+  document.getElementById('calcResult').classList.remove('show');
+}
+
+const doseHints = {
+  'comprimido': 'unidades (ej: 1, 0.5)',
+  'cápsula': 'unidades (ej: 1, 2)',
+  'jarabe': 'mililitros (ej: 5ml, 10ml)',
+  'gotas': 'gotas (ej: 10, 15)',
+  'puff': 'puffs por toma (ej: 1, 2)',
+  'parche': 'parches (ej: 1)',
+  'inyección': 'ml o unidades (ej: 1ml)',
+  'crema': 'aplicaciones o gramos (ej: 1)',
+};
+
+function updateDoseHint() {
+  const type = document.getElementById('newType').value;
+  const hint = document.getElementById('doseHint');
+  if (hint) hint.textContent = doseHints[type] || '';
+}
 
 function calculate() {
   const dose = parseFloat(document.getElementById('calcDose').value) || 1;
   const freq = parseInt(document.getElementById('calcFreq').value) || 1;
-  const dur = parseInt(document.getElementById('calcDuration').value) || 7;
-  const unit = document.getElementById('calcUnit').value;
-  const stockEl = document.getElementById('calcStock').value;
-  const stock = parseInt(stockEl) || 0;
-  const startVal = document.getElementById('calcStart').value;
-
-  let days = dur;
-  if (unit === 'semanas') days = dur * 7;
-  if (unit === 'meses') days = dur * 30;
-
-  const total = dose * freq * days;
-  const missing = Math.max(0, total - stock);
-
-  const start = new Date(startVal + 'T12:00:00');
-  const end = new Date(start);
-  end.setDate(end.getDate() + days - 1);
-  const buyBy = new Date(start);
-  buyBy.setDate(buyBy.getDate() + Math.floor(days * 0.75));
-
+  const stock = parseInt(document.getElementById('calcStock').value) || 0;
+  const indefinido = document.getElementById('calcIndefinido').checked;
   const fmt = d => `${d.getDate()} de ${months[d.getMonth()]}`;
+  const today2 = new Date();
 
-  document.getElementById('rTotal').textContent = `${total} unidades`;
-  document.getElementById('rStock').textContent = `${stock} unidades`;
-  document.getElementById('rMissing').textContent = missing > 0 ? `${missing} unidades` : 'tienes suficiente ✓';
-  document.getElementById('rEnd').textContent = fmt(end);
-  document.getElementById('rAlert').textContent =
-    missing > 0
-      ? `🛒 Compra antes del ${fmt(buyBy)} para no quedarte sin pastillas.`
-      : `🌿 Con tu stock actual llegas hasta el ${fmt(end)}.`;
+  if (indefinido) {
+    const diasPara = parseInt(document.getElementById('calcDiasPara').value) || 30;
+    const needed = dose * freq * diasPara;
+    const missing = Math.max(0, needed - stock);
+    const alcanzaHasta = new Date(today2);
+    alcanzaHasta.setDate(alcanzaHasta.getDate() + Math.floor(stock / (dose * freq)));
+    const buyBy = new Date(today2);
+    buyBy.setDate(buyBy.getDate() + Math.floor(stock / (dose * freq)) - 7);
+
+    document.getElementById('rTotal').textContent = `${needed} unidades (para ${diasPara} días)`;
+    document.getElementById('rStock').textContent = `${stock} unidades`;
+    document.getElementById('rMissing').textContent = missing > 0 ? `${missing} unidades` : 'tienes suficiente ✓';
+    document.getElementById('rEnd').textContent = `~${fmt(alcanzaHasta)}`;
+    document.getElementById('rAlert').textContent =
+      missing > 0
+        ? `🛒 Compra ${missing} unidades para tener para ${diasPara} días.`
+        : `🌿 Tu stock actual te alcanza hasta el ${fmt(alcanzaHasta)}. Compra antes del ${fmt(buyBy)}.`;
+  } else {
+    const dur = parseInt(document.getElementById('calcDuration').value) || 7;
+    const unit = document.getElementById('calcUnit').value;
+    let days = dur;
+    if (unit === 'semanas') days = dur * 7;
+    if (unit === 'meses') days = dur * 30;
+
+    const total = dose * freq * days;
+    const missing = Math.max(0, total - stock);
+    const end = new Date(today2);
+    end.setDate(end.getDate() + days - 1);
+    const buyBy = new Date(today2);
+    buyBy.setDate(buyBy.getDate() + Math.floor(days * 0.75));
+
+    document.getElementById('rTotal').textContent = `${total} unidades`;
+    document.getElementById('rStock').textContent = `${stock} unidades`;
+    document.getElementById('rMissing').textContent = missing > 0 ? `${missing} unidades` : 'tienes suficiente ✓';
+    document.getElementById('rEnd').textContent = fmt(end);
+    document.getElementById('rAlert').textContent =
+      missing > 0
+        ? `🛒 Compra antes del ${fmt(buyBy)} para no quedarte sin.`
+        : `🌿 Con tu stock llegas hasta el ${fmt(end)}.`;
+  }
 
   document.getElementById('calcResult').classList.add('show');
 }
@@ -1304,6 +1363,7 @@ function calculate() {
 // ---- INIT ----
 renderTodayPills();
 populateCalcPills();
+updateDoseHint();
 </script>
 </body>
 </html>
